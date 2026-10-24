@@ -1,0 +1,1049 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Trenes y paso a nivel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  --bg: #e9edf0;
+  --surface: #f7f9fa;
+  --ink: #18242c;
+  --muted: #55666f;
+  --line: #c5ced4;
+  --red: #c0302a;
+  --red-ink: #ffffff;
+  --amber: #f0b429;
+  --amber-ink: #231900;
+  --green: #1b7f55;
+  --green-ink: #ffffff;
+  --stripe: #ffffff;
+  --focus: #0b5cad;
+  font-family: "Barlow Semi Condensed", "Arial Narrow", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10181e;
+    --surface: #18232b;
+    --ink: #e6edf1;
+    --muted: #96a7b2;
+    --line: #2b3a45;
+    --red: #cf3d33;
+    --green: #1f8a5b;
+    --stripe: #10181e;
+    --focus: #7db8f0;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10181e;
+  --surface: #18232b;
+  --ink: #e6edf1;
+  --muted: #96a7b2;
+  --line: #2b3a45;
+  --red: #cf3d33;
+  --green: #1f8a5b;
+  --stripe: #10181e;
+  --focus: #7db8f0;
+}
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+*, *::before, *::after { box-sizing: inherit; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 18px;
+  line-height: 1.35;
+  -webkit-text-size-adjust: 100%;
+}
+main { max-width: 560px; margin: 0 auto; padding: 16px 16px 40px; }
+h1 { font-size: 22px; font-weight: 700; margin: 4px 0 0; letter-spacing: 0.1px; }
+h2 { font-size: 20px; font-weight: 700; margin: 0 0 10px; }
+p { margin: 0; }
+.clock { color: var(--muted); font-size: 17px; margin-top: 2px; font-variant-numeric: tabular-nums; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+.status {
+  margin-top: 14px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--sc);
+  color: var(--sct);
+  padding: 26px 16px 18px;
+  position: relative;
+}
+.status::before {
+  content: "";
+  position: absolute; left: 0; right: 0; top: 0; height: 12px;
+  background: repeating-linear-gradient(-45deg, var(--stripe) 0 10px, rgba(0,0,0,0.0) 10px 20px);
+  opacity: 0.85;
+}
+.status[data-level="red"]   { --sc: var(--red);   --sct: var(--red-ink); }
+.status[data-level="amber"] { --sc: var(--amber); --sct: var(--amber-ink); }
+.status[data-level="green"] { --sc: var(--green); --sct: var(--green-ink); }
+.status .big { font-size: 38px; line-height: 1.05; font-weight: 700; }
+.status .sub { font-size: 19px; margin-top: 8px; font-weight: 500; }
+
+section { margin-top: 22px; }
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.hz { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; }
+.hz + .hz { border-top: 1px solid var(--line); }
+.dot { flex: none; width: 16px; height: 16px; border-radius: 50%; margin-top: 5px; }
+.dot[data-level="red"] { background: var(--red); }
+.dot[data-level="amber"] { background: var(--amber); }
+.dot[data-level="green"] { background: var(--green); }
+.hz b { font-weight: 700; }
+.hz span { color: var(--muted); display: block; font-size: 16px; }
+
+.train { display: grid; grid-template-columns: 74px 1fr; gap: 4px 12px; padding: 12px 14px; align-items: center; }
+.train + .train { border-top: 1px solid var(--line); }
+.train .time { font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
+.train .time small { display: block; font-size: 14px; font-weight: 500; color: var(--muted); text-decoration: line-through; margin-top: 3px; }
+.train .name { font-weight: 600; }
+.train .meta { color: var(--muted); font-size: 16px; }
+.train .delay { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; margin-top: 4px; font-size: 16px; color: var(--muted); }
+select, input[type="number"], textarea, button {
+  font: inherit;
+  color: var(--ink);
+}
+select, input[type="number"] {
+  min-height: 44px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0 10px;
+}
+textarea {
+  width: 100%;
+  min-height: 190px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 16px;
+  line-height: 1.4;
+}
+.btn {
+  min-height: 48px;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--bg);
+  border-radius: 8px;
+  padding: 0 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); font-weight: 600; }
+.btn.block { width: 100%; font-size: 19px; }
+.empty { padding: 14px; color: var(--muted); }
+.note { color: var(--muted); font-size: 16px; margin-top: 8px; }
+.log { list-style: none; margin: 0; padding: 0; }
+.log li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 6px 14px; min-height: 48px; font-variant-numeric: tabular-nums; }
+.log li + li { border-top: 1px solid var(--line); }
+.log button { min-height: 40px; background: transparent; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; font-size: 16px; }
+details { margin-top: 22px; }
+summary { font-size: 20px; font-weight: 700; cursor: pointer; min-height: 44px; display: flex; align-items: center; }
+.set { padding: 4px 0 0; display: grid; gap: 14px; }
+.row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.row label { display: flex; align-items: center; gap: 8px; }
+.foot { margin-top: 26px; color: var(--muted); font-size: 15px; }
+.toast { min-height: 24px; margin-top: 8px; color: var(--muted); font-size: 16px; }
+a.btn { display: inline-flex; align-items: center; text-decoration: none; }
+.name-row { display: flex; align-items: center; gap: 10px; }
+.name-row .name { min-width: 0; }
+.kind { flex: none; display: inline-flex; color: var(--ink); }
+.kind svg { width: 72px; height: 22px; display: block; }
+.train .route { font-size: 17px; margin-top: 2px; }
+.train.past { opacity: 0.55; }
+input[type="url"] { min-height: 44px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 0 10px; font: inherit; color: var(--ink); }
+.live { margin-top: 4px; font-size: 15px; color: var(--muted); }
+.live[data-s="on"]::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--green); margin-right: 6px; }
+.live[data-s="err"] { color: var(--red); }
+.livebadge { font-size: 16px; font-weight: 600; margin-top: 2px; }
+.status[data-level="none"] { --sc: var(--line); --sct: var(--ink); }
+.dot[data-level="none"] { background: var(--muted); }
+.daynav { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.navbtn { flex: none; width: 52px; height: 52px; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.navbtn::before { content: ""; width: 11px; height: 11px; border-left: 3px solid var(--ink); border-bottom: 3px solid var(--ink); }
+.navbtn.prev::before { transform: rotate(45deg); margin-left: 5px; }
+.navbtn.next::before { transform: rotate(225deg); margin-right: 5px; }
+.daylabel { flex: 1; min-height: 52px; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; font: inherit; color: var(--ink); cursor: pointer; line-height: 1.15; padding: 4px 8px; text-align: center; }
+.daylabel b { display: block; font-size: 22px; }
+.daylabel span { display: block; font-size: 15px; color: var(--muted); }
+.hero-art svg rect { fill: var(--hero-bg); }
+.hero-art svg path { stroke: var(--hero-line); }
+:root { --hero-bg: #c9d6dd; --hero-line: #5f7482; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --hero-bg: #1d2b35; --hero-line: #5d7686; } }
+:root[data-theme="dark"] { --hero-bg: #1d2b35; --hero-line: #5d7686; }
+.picker { margin-top: 14px; }
+.picker-label { display: block; font-weight: 600; margin-bottom: 6px; }
+.pick-wrap { position: relative; }
+#stSearch { width: 100%; min-height: 48px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 0 48px 0 12px; font: inherit; font-size: 19px; color: var(--ink); }
+#stToggle { position: absolute; right: 0; top: 0; width: 48px; height: 48px; background: transparent; border: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+#stToggle::before { content: ""; width: 9px; height: 9px; border-right: 2px solid var(--ink); border-bottom: 2px solid var(--ink); transform: rotate(45deg) translateY(-2px); }
+#stList { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 5; margin: 0; padding: 4px 0; list-style: none; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; max-height: min(50vh, 320px); overflow-y: auto; box-shadow: 0 6px 18px rgba(0,0,0,0.18); }
+#stList li { padding: 12px 14px; min-height: 44px; cursor: pointer; }
+#stList li[aria-selected="true"] { background: var(--bg); font-weight: 600; }
+#stList li.active { background: var(--bg); outline: 2px solid var(--focus); outline-offset: -2px; }
+#stList li.none { color: var(--muted); cursor: default; }
+.hero { margin-top: 14px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); }
+.hero-art { position: relative; aspect-ratio: 16 / 9; background: var(--hero-bg); }
+.hero-art svg, .hero-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.hero-cap { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 14px; }
+.hero-name { font-size: 22px; font-weight: 700; line-height: 1.1; }
+.hero-code { color: var(--muted); font-size: 15px; margin-top: 2px; }
+.hero-cap a { color: var(--ink); font-weight: 600; white-space: nowrap; min-height: 44px; display: inline-flex; align-items: center; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Trenes y paso a nivel</h1>
+    <p class="clock" id="clock"></p>
+    <p class="live" id="liveState" data-s="off"></p>
+  </header>
+
+  <div class="picker" id="picker">
+    <label for="stSearch" class="picker-label">Estación</label>
+    <div class="pick-wrap">
+      <input id="stSearch" type="text" role="combobox" aria-expanded="false" aria-controls="stList" aria-autocomplete="list" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Busca o elige una estación">
+      <button id="stToggle" type="button" aria-label="Ver todas las estaciones"></button>
+      <ul id="stList" role="listbox" hidden></ul>
+    </div>
+  </div>
+
+  <div class="hero" id="hero">
+    <div class="hero-art" id="heroArt">
+      <svg viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <rect width="320" height="180" fill="var(--hero-bg)"/>
+        <path d="M150 60L40 180M170 60L280 180" stroke="var(--hero-line)" stroke-width="3" fill="none"/>
+        <path d="M124 80H196M110 95H210M93 113H227M73 135H247M50 160H270" stroke="var(--hero-line)" stroke-width="3" fill="none" opacity=".6"/>
+      </svg>
+    </div>
+    <div class="hero-cap">
+      <div>
+        <div class="hero-name" id="heroName"></div>
+        <div class="hero-code" id="heroCode"></div>
+      </div>
+      <a id="heroLink" href="https://www.adif.es" target="_blank" rel="noopener noreferrer">Ficha en Adif</a>
+    </div>
+  </div>
+
+  <div id="torrijosView">
+  <div class="status" id="status" data-level="green" role="status" aria-live="polite">
+    <div class="big" id="statusBig">Calculando…</div>
+    <div class="sub" id="statusSub"></div>
+  </div>
+
+  <section>
+    <div class="card" id="horizons"></div>
+  </section>
+
+  <section>
+    <h2>Trenes de viajeros</h2>
+    <div class="daynav" role="group" aria-label="Cambiar de día">
+      <button class="navbtn prev" id="dayPrev" type="button" aria-label="Día anterior"></button>
+      <button class="daylabel" id="dayLabel" type="button"></button>
+      <button class="navbtn next" id="dayNext" type="button" aria-label="Día siguiente"></button>
+    </div>
+    <div class="card" id="upcoming"></div>
+    <p class="note" id="dayNote"></p>
+    <p class="note">Si Renfe o Adif anuncian retraso en un tren, indícalo aquí y la previsión se ajusta.</p>
+  </section>
+
+  <section>
+    <h2>Mercancías</h2>
+    <button class="btn block" id="freightBtn" type="button">Barrera cerrada por mercancías ahora</button>
+    <p class="toast" id="toast" role="status" aria-live="polite"></p>
+    <div class="card" id="freightLog" style="margin-top:6px"></div>
+    <p class="note" id="freightNote"></p>
+  </section>
+
+  <details id="settings">
+    <summary>Ajustes y horario</summary>
+    <div class="set">
+      <div>
+        <label for="apiUrl" style="font-weight:600">Dirección del intermediario de tiempo real</label>
+        <input type="url" id="apiUrl" placeholder="https://torrijos-renfe.tu-usuario.workers.dev" style="width:100%;margin-top:6px" autocapitalize="off" spellcheck="false">
+        <p class="note">Es la dirección de tu Worker de Cloudflare. Si la dejas vacía, la página usa solo los horarios programados.</p>
+      </div>
+      <div class="row">
+        <label>Minutos de cierre antes del tren
+          <input type="number" id="before" min="0" max="30" inputmode="numeric">
+        </label>
+        <label>Minutos hasta que reabre
+          <input type="number" id="after" min="0" max="30" inputmode="numeric">
+        </label>
+      </div>
+      <div>
+        <p style="font-weight:600;margin-bottom:6px">Horario de llegadas a Torrijos</p>
+        <label class="row" style="margin-bottom:8px">Tipo de día
+          <select id="ttDay">
+            <option value="wk">Laborables (lunes a viernes)</option>
+            <option value="sat">Sábados</option>
+            <option value="sun">Domingos</option>
+          </select>
+        </label>
+        <textarea id="tt" spellcheck="false" aria-label="Horario de trenes, una línea por tren con hora y nombre"></textarea>
+        <p class="note">Una línea por tren: hora, nombre y, detrás de |, el origen y el destino separados por >. Por ejemplo “10:27 Alvia 190 | Madrid Chamartín > Cáceres”. El destino es opcional.</p>
+      </div>
+      <div class="row">
+        <button class="btn" id="saveTT" type="button">Guardar horario</button>
+        <button class="btn ghost" id="resetTT" type="button">Restaurar el de Adif</button>
+      </div>
+      <p class="note" id="ttMsg"></p>
+      <div>
+        <button class="btn ghost" id="clearFreight" type="button">Borrar registros de mercancías</button>
+      </div>
+    </div>
+  </details>
+
+  <p class="foot">Versión de prueba. Los horarios son los programados en la ficha de Torrijos de Adif (sábado 24/10/2026) más el retraso que tú indiques; todavía no lee el tiempo real. Pueden cambiar entre laborables y fines de semana, así que conviene revisarlos. Los trenes que pasan sin parar y los mercancías no aparecen salvo los que registres tú.</p>
+  </div>
+
+  <div id="otherView" hidden>
+    <section>
+      <div class="card" style="padding:14px">
+        <p style="font-weight:700;font-size:20px" id="otherName"></p>
+        <p class="note">Los horarios y el tiempo real de esta estación todavía no están cargados en esta versión. Por ahora puedes consultarlos en su ficha de Adif.</p>
+        <p style="margin-top:12px"><a class="btn" id="otherLink" href="https://www.adif.es" target="_blank" rel="noopener noreferrer">Abrir horarios en Adif</a></p>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+(function () {
+  var OLD_DEFAULT = [
+    "06:49 Regional 17703 desde Talavera de la Reina",
+    "09:10 Regional Exprés 17021 desde Cáceres",
+    "10:27 Alvia 190 desde Madrid Chamartín",
+    "11:58 Media Distancia 34900 desde Madrid Atocha",
+    "12:14 Alvia 299 desde Badajoz",
+    "17:39 Alvia 192 desde Madrid Chamartín",
+    "19:00 Media Distancia 17907 desde Sevilla",
+    "22:30 Regional 17706 desde Madrid Atocha"
+  ].join("\n");
+
+  // Formato: hora nombre | origen > destino (el destino es opcional)
+  var V2_DEFAULT = [
+    "06:49 Regional 17703 | Talavera de la Reina >",
+    "09:10 Regional Exprés 17021 | Cáceres >",
+    "10:27 Alvia 190 | Madrid Chamartín >",
+    "11:58 Media Distancia 34900 | Madrid Atocha >",
+    "12:14 Alvia 299 | Badajoz > Madrid Chamartín",
+    "17:39 Alvia 192 | Madrid Chamartín >",
+    "19:00 Media Distancia 17907 | Sevilla Santa Justa >",
+    "22:30 Regional 17706 | Madrid Atocha >"
+  ].join("\n");
+
+  // Domingo deducido de la ficha de Adif (las horas de los trenes que no se repiten el sábado no están confirmadas)
+  var DEFAULT_SUN = [
+    "09:10 Regional Exprés 17705 | Talavera de la Reina >",
+    "11:58 Media Distancia 34900 | Madrid Atocha >",
+    "12:14 Alvia 299 | Badajoz > Madrid Chamartín",
+    "15:47 Regional Exprés 17012 | Madrid Atocha >",
+    "16:26 Regional Exprés 17026 | Mérida >",
+    "17:39 Alvia 192 | Madrid Chamartín >",
+    "19:00 Media Distancia 17907 | Sevilla Santa Justa >",
+    "20:41 Regional Exprés 17018 | Madrid Atocha >",
+    "21:19 Alvia 295 | Badajoz > Madrid Chamartín",
+    "22:30 Regional 17706 | Madrid Atocha >"
+  ].join("\n");
+
+  var DEFAULT_TT = [
+    "06:49 Regional 17703 | Talavera de la Reina > Madrid Atocha Cercanías",
+    "09:10 Regional Exprés 17021 | Cáceres >",
+    "10:27 Alvia 190 | Madrid Chamartín >",
+    "11:58 Media Distancia 34900 | Madrid Atocha >",
+    "12:14 Alvia 299 | Badajoz > Madrid Chamartín",
+    "17:39 Alvia 192 | Madrid Chamartín >",
+    "19:00 Media Distancia 17907 | Sevilla Santa Justa >",
+    "22:30 Regional 17706 | Madrid Atocha >"
+  ].join("\n");
+
+  var KEY = "torrijos-paso-nivel-v1";
+  var mem = null;
+  var DELAYS = [0, 1, 2, 3, 5, 10, 15, 20, 30, 45, 60];
+
+  function load() {
+    try {
+      var r = localStorage.getItem(KEY);
+      if (r) return JSON.parse(r);
+    } catch (e) {}
+    return mem;
+  }
+  var state = Object.assign({ tt: DEFAULT_TT, before: 4, after: 4, delays: {}, freight: [] }, load() || {});
+  if (typeof state.tt !== "string") state.tt = DEFAULT_TT;
+  if (state.tt === OLD_DEFAULT || state.tt === V2_DEFAULT) state.tt = DEFAULT_TT;
+  var DEFAULTS = { wk: "", sat: DEFAULT_TT, sun: DEFAULT_SUN };
+  if (!state.tts || typeof state.tts !== "object") state.tts = { wk: "", sat: state.tt, sun: DEFAULT_SUN };
+  ["wk", "sat", "sun"].forEach(function (k) { if (typeof state.tts[k] !== "string") state.tts[k] = DEFAULTS[k]; });
+  // Si prefieres no escribirla en Ajustes, pon aquí la dirección de tu Worker.
+  var DEFAULT_API = "";
+  if (typeof state.api !== "string") state.api = DEFAULT_API;
+  if (!Array.isArray(state.freight)) state.freight = [];
+  if (!state.delays || typeof state.delays !== "object") state.delays = {};
+  state.before = clampInt(state.before, 0, 30, 4);
+  state.after = clampInt(state.after, 0, 30, 4);
+
+  function save() {
+    mem = state;
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  }
+  function clampInt(v, lo, hi, d) {
+    v = parseInt(v, 10);
+    if (isNaN(v)) return d;
+    return Math.max(lo, Math.min(hi, v));
+  }
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function fmt(min) {
+    min = Math.round(min);
+    min = ((min % 1440) + 1440) % 1440;
+    return pad(Math.floor(min / 60)) + ":" + pad(min % 60);
+  }
+  function fmtDur(min) {
+    min = Math.max(0, Math.round(min));
+    var h = Math.floor(min / 60), m = min % 60;
+    if (h === 0) return m + " min";
+    return h + " h" + (m ? " " + m + " min" : "");
+  }
+
+  var ICONS = {
+    alvia: '<svg viewBox="0 0 120 36" aria-hidden="true"><path d="M2 27V14c0-3 2-5 5-5h70c16 0 28 8 36 18z" fill="currentColor"/><path d="M10 15h58" style="stroke:var(--surface)" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M82 14c9 1 17 5 23 11" style="stroke:var(--surface)" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="22" cy="30" r="3.2" fill="currentColor"/><circle cx="56" cy="30" r="3.2" fill="currentColor"/><circle cx="90" cy="30" r="3.2" fill="currentColor"/></svg>',
+    regional: '<svg viewBox="0 0 120 36" aria-hidden="true"><path d="M50 8l7-6h10" style="stroke:currentColor" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M2 27V12c0-2.5 2-4 4.5-4H100c8 0 14 6 16 19z" fill="currentColor"/><g style="fill:var(--surface)"><rect x="9" y="13" width="20" height="7" rx="1.5"/><rect x="35" y="13" width="20" height="7" rx="1.5"/><rect x="61" y="13" width="20" height="7" rx="1.5"/><path d="M92 13h5c5 0 9 3 11 8H92z"/></g><circle cx="20" cy="30" r="3.2" fill="currentColor"/><circle cx="90" cy="30" r="3.2" fill="currentColor"/></svg>',
+    md: '<svg viewBox="0 0 120 36" aria-hidden="true"><path d="M2 27V12c0-2.5 2-4 4.5-4H96c10 0 18 8 20 19z" fill="currentColor"/><g style="fill:var(--surface)"><rect x="9" y="13" width="38" height="6" rx="1.5"/><rect x="52" y="13" width="30" height="6" rx="1.5"/><path d="M88 13h4c6 0 11 4 14 9H88z"/><rect x="2" y="23" width="112" height="2"/></g><circle cx="20" cy="30" r="3.2" fill="currentColor"/><circle cx="56" cy="30" r="3.2" fill="currentColor"/><circle cx="90" cy="30" r="3.2" fill="currentColor"/></svg>'
+  };
+  function trainIcon(name) {
+    var n = norm(name), kind = null, label = "";
+    if (n.indexOf("alvia") > -1) { kind = "alvia"; label = "Alvia"; }
+    else if (n.indexOf("regional") > -1) { kind = "regional"; label = "Regional"; }
+    else if (n.indexOf("media distancia") > -1 || /^md\b/.test(n)) { kind = "md"; label = "Media Distancia"; }
+    if (!kind) return null;
+    var s = el("span", "kind");
+    s.setAttribute("role", "img");
+    s.setAttribute("aria-label", "Dibujo esquemático de un tren " + label);
+    s.innerHTML = ICONS[kind];
+    return s;
+  }
+
+  function routeLines(t) {
+    var lines = [];
+    if (t.from) {
+      var to = t.to || (norm(t.from).indexOf("madrid") > -1 ? "?" : "Madrid");
+      lines.push(t.from + "-" + to);
+    }
+    return lines;
+  }
+
+  var viewOffset = 0;
+  var DOW = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+  var MONTHS = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+  var DAYNAMES = { wk: "los laborables", sat: "los sábados", sun: "los domingos" };
+  function dayType(d) { var g = d.getDay(); return g === 0 ? "sun" : (g === 6 ? "sat" : "wk"); }
+  function longDate(d) { return DOW[d.getDay()] + " " + d.getDate() + " de " + MONTHS[d.getMonth()]; }
+
+  function dateKey(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+
+  function parseTT(text) {
+    var out = [];
+    String(text).split(/\r?\n/).forEach(function (line) {
+      var m = line.match(/^\s*(\d{1,2}):(\d{2})\s+(.+?)\s*$/);
+      if (!m) return;
+      var h = parseInt(m[1], 10), mi = parseInt(m[2], 10);
+      if (h > 23 || mi > 59) return;
+      var parts = m[3].split("|");
+      var nm = parts[0].trim();
+      var from = "", to = "";
+      if (parts.length > 1) {
+        var r = parts.slice(1).join("|").split(">");
+        from = (r[0] || "").trim();
+        to = (r[1] || "").trim();
+      } else {
+        var dm = nm.match(/^(.*?)\s+desde\s+(.+)$/i);
+        if (dm) { nm = dm[1]; from = dm[2]; }
+      }
+      out.push({ min: h * 60 + mi, name: nm, from: from, to: to, id: pad(h) + ":" + pad(mi) + "|" + nm });
+    });
+    out.sort(function (a, b) { return a.min - b.min; });
+    return out;
+  }
+
+  function pruneDelays(today) {
+    var changed = false;
+    Object.keys(state.delays).forEach(function (k) {
+      if (k.indexOf(today + "|") !== 0) { delete state.delays[k]; changed = true; }
+    });
+    if (changed) save();
+  }
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  // ---- Tiempo real de Renfe, a través del intermediario ----
+  var TORRIJOS = "35105";
+  var PRODUCT = { 2: "AVE", 3: "Avant", 4: "Talgo", 11: "Alvia", 13: "Intercity", 16: "Media Distancia", 18: "Regional", 19: "Regional Exprés" };
+  var NAME_FIX = { "17000": "Madrid Chamartín" };
+  var live = { on: false, at: null, feedAt: null, error: "", trains: [] };
+  var stNames = {};
+  var namesLoaded = false;
+
+  function apiBase() { return String(state.api || "").trim().replace(/\/+$/, ""); }
+  function getJSON(path) {
+    return fetch(apiBase() + path, { cache: "no-store" }).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    });
+  }
+  function hmStr(s) { var m = /^(\d{1,2}):(\d{2})/.exec(s || ""); return m ? (+m[1]) * 60 + (+m[2]) : null; }
+  function isoMin(s) { var m = /T(\d{2}):(\d{2}):(\d{2})/.exec(s || ""); return m ? (+m[1]) * 60 + (+m[2]) + (+m[3]) / 60 : null; }
+  function nameOf(code) {
+    var n = NAME_FIX[code] || stNames[code] || code;
+    return String(n).replace(/\s+-\s+/g, " ");
+  }
+  function buildNames(geo) {
+    (geo.features || []).forEach(function (f) {
+      if (f && f.properties) stNames[String(f.properties.CODIGO)] = f.properties.NOMBRE;
+    });
+  }
+
+  function buildLive(flota, trenes) {
+    var pos = {};
+    (flota.trenes || []).forEach(function (f) { pos[parseInt(f.codComercial, 10)] = f; });
+    var out = [];
+    (trenes.trenes || []).forEach(function (t) {
+      var stops = t.estaciones || [], ti = -1, ni = -1, i;
+      for (i = 0; i < stops.length; i++) { if (stops[i].p === TORRIJOS) { ti = i; break; } }
+      if (ti < 0) return;
+      var num = parseInt(t.idTren, 10);
+      var f = pos[num] || null;
+      if (f) { for (i = 0; i < stops.length; i++) { if (stops[i].p === f.codEstSig) { ni = i; break; } } }
+      var first = nameOf(stops[0].p);
+      out.push({
+        num: num,
+        product: f ? f.codProduct : null,
+        from: first,
+        to: nameOf(stops[stops.length - 1].p),
+        westbound: norm(first).indexOf("madrid") > -1,
+        arr: hmStr(stops[ti].h),
+        dep: hmStr(stops[ti].hs),
+        delay: f ? (parseInt(f.ultRetraso, 10) || 0) : null,
+        eta: (f && ni === ti) ? isoMin(f.horaLlegadaSigEst) : null,
+        passed: !!(f && ni > ti)
+      });
+    });
+    live.trains = out;
+    live.feedAt = isoMin(flota.fechaActualizacion);
+  }
+
+  function refreshLive() {
+    if (!apiBase()) { live.on = false; live.error = ""; live.trains = []; return Promise.resolve(); }
+    var jobs = [getJSON("/api/flota"), getJSON("/api/trenes")];
+    if (!namesLoaded) jobs.push(getJSON("/api/estaciones").catch(function () { return null; }));
+    return Promise.all(jobs).then(function (res) {
+      if (res[2]) { buildNames(res[2]); namesLoaded = true; }
+      buildLive(res[0], res[1]);
+      live.on = true; live.at = new Date(); live.error = "";
+    }).catch(function (e) {
+      live.on = false; live.trains = [];
+      live.error = String((e && e.message) || e);
+    });
+  }
+
+  function trainNum(name) { var m = /(\d{3,5})\s*$/.exec(name); return m ? parseInt(m[1], 10) : null; }
+  function findLive(t) {
+    var n = trainNum(t.name), best = null;
+    live.trains.forEach(function (lt) {
+      if (!best && n !== null && lt.num === n && lt.arr !== null && Math.abs(lt.arr - t.sched) <= 30) best = lt;
+    });
+    if (best) return best;
+    var hasFrom = !!t.from, fromMadrid = norm(t.from || "").indexOf("madrid") > -1;
+    live.trains.forEach(function (lt) {
+      if (best || lt.arr === null) return;
+      if (Math.abs(lt.arr - t.sched) <= 2 && (!hasFrom || lt.westbound === fromMadrid)) best = lt;
+    });
+    return best;
+  }
+  function setWindow(t) { t.start = t.eff - state.before; t.end = t.eff + state.after; }
+
+  function attachLive(trains, nowM, isToday) {
+    if (!isToday || !live.on) return;
+    var used = {};
+    trains.forEach(function (t) {
+      var lt = findLive(t);
+      if (!lt) return;
+      used[lt.num + "|" + lt.arr] = true;
+      t.live = lt;
+      t.from = lt.from;
+      t.to = lt.to;
+      if (lt.delay !== null && !lt.passed) { t.delay = lt.delay; t.liveDelay = true; }
+      t.eff = (lt.eta !== null && lt.eta > 0) ? lt.eta : t.sched + t.delay;
+      if (!lt.passed && t.eff < nowM) t.eff = nowM;
+      setWindow(t);
+      if (lt.passed) { t.passedLive = true; t.end = Math.min(t.end, nowM - 0.5); t.start = Math.min(t.start, t.end); }
+    });
+    live.trains.forEach(function (lt) {
+      if (lt.passed || lt.arr === null || used[lt.num + "|" + lt.arr]) return;
+      var d = lt.delay || 0;
+      var eff = (lt.eta !== null && lt.eta > 0) ? lt.eta : lt.arr + d;
+      if (eff < nowM) eff = nowM;
+      var t = { id: "live|" + lt.num, name: (PRODUCT[lt.product] || "Tren") + " " + lt.num, from: lt.from, to: lt.to, sched: lt.arr, delay: d, eff: eff, live: lt, liveDelay: lt.delay !== null, extra: true };
+      setWindow(t);
+      trains.push(t);
+    });
+  }
+
+  function renderLiveState(now) {
+    var e = $("liveState"), s, txt;
+    if (!apiBase()) {
+      s = "off";
+      txt = "Tiempo real desactivado: falta la dirección del intermediario (en Ajustes).";
+    } else if (live.on) {
+      s = "on";
+      txt = "Tiempo real de Renfe activo. Actualizado a las " + pad(live.at.getHours()) + ":" + pad(live.at.getMinutes()) + ":" + pad(live.at.getSeconds()) + ".";
+      if (live.feedAt !== null) {
+        var age = Math.round(now.getHours() * 60 + now.getMinutes() - live.feedAt);
+        if (age > 5 && age < 600) txt += " Ojo: los datos de Renfe tienen " + age + " min.";
+      }
+    } else {
+      s = "err";
+      txt = "Sin tiempo real" + (live.error ? " (" + live.error + ")" : "") + ". Se muestran los horarios programados.";
+    }
+    e.setAttribute("data-s", s);
+    e.textContent = txt;
+  }
+
+  function computeTrains(now, today, ttText, isToday) {
+    var nowM = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
+    var trains = parseTT(ttText).map(function (t) {
+      var dl = parseInt(state.delays[today + "|" + t.id], 10) || 0;
+      var eff = t.min + dl;
+      return { id: t.id, name: t.name, from: t.from, to: t.to, sched: t.min, delay: dl, eff: eff, start: eff - state.before, end: eff + state.after };
+    });
+    attachLive(trains, nowM, isToday);
+    return { nowM: nowM, trains: trains };
+  }
+
+  function freightDays(nowM, H, today) {
+    var days = {};
+    var count = 0;
+    state.freight.forEach(function (ts) {
+      var d = new Date(ts);
+      var k = dateKey(d);
+      if (k === today) return;
+      var m = d.getHours() * 60 + d.getMinutes();
+      if (m >= nowM - 15 && m <= nowM + H + 15 && !days[k]) { days[k] = 1; count++; }
+    });
+    return count;
+  }
+
+  function verdict(c, H, today) {
+    var closed = c.trains.filter(function (t) { return t.start <= c.nowM && c.nowM <= t.end; })[0];
+    var hits = c.trains.filter(function (t) { return t.end >= c.nowM && t.start <= c.nowM + H; });
+    var fd = freightDays(c.nowM, H, today);
+    if (closed) return { level: "red", closed: closed, train: closed, fd: fd };
+    if (hits.length) return { level: "red", train: hits[0], fd: fd };
+    if (fd >= 2) return { level: "amber", fd: fd };
+    return { level: c.trains.length ? "green" : "none", fd: fd };
+  }
+
+  function renderClock(now) {
+    var day = now.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" });
+    $("clock").textContent = day.charAt(0).toUpperCase() + day.slice(1) + ", " + pad(now.getHours()) + ":" + pad(now.getMinutes());
+  }
+
+  function renderStatus(c, today) {
+    var v = verdict(c, 30, today);
+    var st = $("status"), big = $("statusBig"), sub = $("statusSub");
+    st.setAttribute("data-level", v.level);
+    if (v.closed) {
+      big.textContent = "Barrera probablemente cerrada";
+      sub.textContent = v.train.name + ". Reabriría hacia las " + fmt(v.train.end) + ".";
+    } else if (v.level === "red") {
+      var mins = Math.max(1, Math.ceil(v.train.start - c.nowM));
+      big.textContent = "Cierre previsto en " + fmtDur(mins);
+      sub.textContent = v.train.name + ", llega a las " + fmt(v.train.eff) + (v.train.delay ? " (retraso de " + v.train.delay + " min)." : ".");
+    } else if (v.level === "amber") {
+      big.textContent = "Mercancías posibles";
+      sub.textContent = "Has registrado cierres a esta hora en " + v.fd + " días distintos.";
+    } else if (v.level === "none") {
+      big.textContent = "Sin horario de hoy";
+      sub.textContent = "Añade el horario de hoy en Ajustes para que el aviso funcione.";
+    } else {
+      big.textContent = "Sin trenes previstos";
+      sub.textContent = "En los próximos 30 min según el horario. No incluye mercancías que no hayas registrado.";
+    }
+  }
+
+  function renderHorizons(c, today) {
+    var box = $("horizons");
+    box.textContent = "";
+    [30, 60].forEach(function (H) {
+      var v = verdict(c, H, today);
+      var row = el("div", "hz");
+      var dot = el("div", "dot");
+      dot.setAttribute("data-level", v.level);
+      var txt = el("div");
+      var title, detail;
+      if (v.level === "red") {
+        title = "Próximos " + H + " min: tren de viajeros";
+        detail = v.train.name + ", " + (v.closed ? "ahora en el paso" : "a las " + fmt(v.train.eff));
+      } else if (v.level === "amber") {
+        title = "Próximos " + H + " min: mercancías posibles";
+        detail = "Cierres registrados a esta hora en " + v.fd + " días";
+      } else if (v.level === "none") {
+        title = "Próximos " + H + " min: sin horario de hoy";
+        detail = "Añade el horario en Ajustes";
+      } else {
+        title = "Próximos " + H + " min: sin trenes previstos";
+        detail = v.fd === 1 ? "Un día con cierre registrado a esta hora, aún poco fiable" : "Según el horario y tus registros";
+      }
+      var b = el("b", null, title);
+      txt.appendChild(b);
+      txt.appendChild(el("span", null, detail));
+      row.appendChild(dot);
+      row.appendChild(txt);
+      box.appendChild(row);
+    });
+  }
+
+    function renderDayNav(vd) {
+    var cap = function (s) { return s.charAt(0).toUpperCase() + s.slice(1); };
+    var b = $("dayLabel");
+    b.textContent = "";
+    var full = longDate(vd), main, sub = "";
+    if (viewOffset === 0) { main = "Hoy"; sub = full; }
+    else if (viewOffset === 1) { main = "Mañana"; sub = full; }
+    else if (viewOffset === -1) { main = "Ayer"; sub = full; }
+    else { main = cap(full); sub = "Toca para volver a hoy"; }
+    b.appendChild(el("b", null, main));
+    b.appendChild(el("span", null, sub));
+    b.setAttribute("aria-label", viewOffset === 0 ? "Hoy, " + full : full + ". Toca para volver a hoy");
+    var note = "";
+    if (dayType(vd) === "sun" && state.tts.sun === DEFAULT_SUN) note = "Horario de domingo deducido de la ficha de Adif de hoy: las horas de algunos trenes pueden no ser exactas.";
+    $("dayNote").textContent = note;
+  }
+
+  function renderUpcoming(c, today, isToday, typeName) {
+    var box = $("upcoming");
+    box.textContent = "";
+    var list = c.trains.slice().sort(function (a, b) { return a.eff - b.eff; });
+    if (!list.length) {
+      box.appendChild(el("p", "empty", "No hay horario cargado para " + typeName + ". Añádelo en Ajustes, en Tipo de día."));
+      return;
+    }
+    list.forEach(function (t) {
+      var row = el("div", isToday && t.end < c.nowM ? "train past" : "train");
+      var time = el("div", "time", fmt(t.eff));
+      if (t.delay) time.appendChild(el("small", null, fmt(t.sched)));
+      var info = el("div");
+      var nr = el("div", "name-row");
+      var ic = trainIcon(t.name);
+      if (ic) nr.appendChild(ic);
+      nr.appendChild(el("div", "name", t.name));
+      info.appendChild(nr);
+      routeLines(t).forEach(function (ln) { info.appendChild(el("div", "route", ln)); });
+      var inWindow = isToday && t.start <= c.nowM && c.nowM <= t.end;
+      var meta = !isToday ? "" : inWindow ? "Ahora en el paso a nivel" :
+        (t.start > c.nowM ? "Cierre en " + fmtDur(Math.max(1, Math.ceil(t.start - c.nowM))) : "Ya ha pasado");
+      if (meta) info.appendChild(el("div", "meta", meta));
+      if (isToday && live.on) {
+        var lb = null;
+        if (t.passedLive) lb = "En directo: ya ha pasado por Torrijos";
+        else if (t.live) {
+          var ld = t.live.delay;
+          lb = ld === null ? "En directo: sin retraso informado" : (ld > 0 ? "En directo: retraso de " + ld + " min" : (ld < 0 ? "En directo: " + (-ld) + " min antes de lo previsto" : "En directo: puntual"));
+        } else if (t.end >= c.nowM) lb = "Aún sin datos en directo";
+        if (lb) info.appendChild(el("div", "livebadge", lb));
+        if (t.extra) info.appendChild(el("div", "meta", "Solo aparece en directo, no está en el horario"));
+      }
+      var dl = el("div", "delay");
+      var lab = el("label", null, "Retraso ");
+      lab.setAttribute("for", "d-" + t.id);
+      var sel = el("select");
+      sel.id = "d-" + t.id;
+      var opts = DELAYS.slice();
+      if (opts.indexOf(t.delay) === -1) opts.push(t.delay);
+      opts.sort(function (a, b) { return a - b; });
+      opts.forEach(function (n) {
+        var o = el("option", null, n === 0 ? "Sin retraso" : "+" + n + " min");
+        o.value = String(n);
+        if (n === t.delay) o.selected = true;
+        sel.appendChild(o);
+      });
+      sel.addEventListener("change", function () {
+        var k = today + "|" + t.id;
+        var n = parseInt(sel.value, 10) || 0;
+        if (n) state.delays[k] = n; else delete state.delays[k];
+        save();
+        render(true);
+      });
+      dl.appendChild(lab);
+      dl.appendChild(sel);
+      row.appendChild(time);
+      row.appendChild(info);
+      if (isToday && !t.liveDelay && !t.passedLive) row.appendChild(dl);
+      box.appendChild(row);
+    });
+  }
+
+  function renderFreight() {
+    var box = $("freightLog");
+    box.textContent = "";
+    var items = state.freight.map(function (ts, i) { return { ts: ts, i: i }; })
+      .sort(function (a, b) { return b.ts - a.ts; }).slice(0, 6);
+    if (!items.length) {
+      box.appendChild(el("p", "empty", "Aún no hay registros. Pulsa el botón cada vez que veas la barrera cerrada por un mercancías."));
+    } else {
+      var ul = el("ul", "log");
+      items.forEach(function (it) {
+        var d = new Date(it.ts);
+        var li = el("li");
+        var label = d.toLocaleDateString("es-ES", { weekday: "short", day: "numeric", month: "numeric" }) + ", " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+        li.appendChild(el("span", null, label));
+        var del = el("button", null, "Borrar");
+        del.type = "button";
+        del.addEventListener("click", function () {
+          state.freight.splice(it.i, 1);
+          save();
+          render(true);
+        });
+        li.appendChild(del);
+        ul.appendChild(li);
+      });
+      box.appendChild(ul);
+    }
+    var n = state.freight.length;
+    $("freightNote").textContent = n + (n === 1 ? " registro en total. " : " registros en total. ") +
+      (n < 10 ? "Con pocos registros el aviso de mercancías no es fiable; hacen falta al menos dos o tres semanas." :
+        "El aviso salta cuando hay cierres a esa hora en al menos dos días distintos.");
+  }
+
+  function render(force) {
+    var ae = document.activeElement;
+    if (!force && ae && /^(SELECT|TEXTAREA|INPUT)$/.test(ae.tagName)) return;
+    var now = new Date();
+    var today = dateKey(now);
+    pruneDelays(today);
+    var c = computeTrains(now, today, state.tts[dayType(now)], true);
+    var vd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + viewOffset);
+    var vKey = dateKey(vd);
+    var cv = viewOffset === 0 ? c : computeTrains(now, vKey, state.tts[dayType(vd)], false);
+    renderClock(now);
+    renderLiveState(now);
+    renderStatus(c, today);
+    renderHorizons(c, today);
+    renderDayNav(vd);
+    renderUpcoming(cv, vKey, viewOffset === 0, DAYNAMES[dayType(vd)]);
+    renderFreight();
+  }
+
+  // Estaciones (enlaces tomados de las fichas de Adif)
+  var STATIONS = [
+    { name: "Torrijos", code: "35105", slug: "35105-torrijos", photo: "https://www.adif.es/documents/20124/4633439/35105F.jpg/5af035a3-763a-1ac4-1f4e-8f1e0af174ac?t=1769600568567" },
+    { name: "Talavera de la Reina", code: "35200", slug: "35200-talavera-la-reina" },
+    { name: "Cáceres", code: "35400", slug: "35400-c%C3%A1ceres" },
+    { name: "Madrid Chamartín Clara Campoamor", code: "17000", slug: "17000-madrid-chamartin" },
+    { name: "Madrid Atocha Cercanías", code: "18000", slug: "18000-madrid-atocha-c." },
+    { name: "Badajoz", code: "37606", slug: "37606-badajoz" },
+    { name: "Mérida", code: "37500", slug: "37500-m%C3%A9rida" },
+    { name: "Sevilla Santa Justa", code: "51003", slug: "51003-sevilla-sta.-justa" }
+  ];
+  var current = STATIONS[0];
+  var stInput = $("stSearch"), stList = $("stList"), shown = [], activeIdx = -1;
+
+  function norm(s) { return String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
+  function adifUrl(s) { return "https://www.adif.es/w/" + s.slug; }
+
+  function renderHero(s) {
+    var art = $("heroArt");
+    Array.prototype.slice.call(art.querySelectorAll("img")).forEach(function (i) { i.remove(); });
+    if (s.photo) {
+      var img = document.createElement("img");
+      img.alt = "Estación de " + s.name;
+      img.referrerPolicy = "no-referrer";
+      img.addEventListener("error", function () { img.remove(); });
+      img.src = s.photo;
+      art.appendChild(img);
+    }
+    $("heroName").textContent = s.name;
+    $("heroCode").textContent = "Código Adif " + s.code;
+    $("heroLink").href = adifUrl(s);
+  }
+
+  function closeList() {
+    stList.hidden = true;
+    stInput.setAttribute("aria-expanded", "false");
+    stInput.removeAttribute("aria-activedescendant");
+    activeIdx = -1;
+  }
+
+  function selectStation(s) {
+    current = s;
+    stInput.value = s.name;
+    closeList();
+    renderHero(s);
+    var isT = s.code === "35105";
+    $("torrijosView").hidden = !isT;
+    $("otherView").hidden = isT;
+    $("otherName").textContent = s.name;
+    $("otherLink").href = adifUrl(s);
+    stInput.blur();
+  }
+
+  function openList(q) {
+    var n = norm(q || "");
+    shown = STATIONS.filter(function (s) { return !n || norm(s.name).indexOf(n) > -1 || s.code.indexOf(n) > -1; });
+    stList.textContent = "";
+    if (!shown.length) stList.appendChild(el("li", "none", "Ninguna estación coincide"));
+    shown.forEach(function (s, i) {
+      var li = el("li", null, s.name);
+      li.id = "st-" + i;
+      li.setAttribute("role", "option");
+      if (s === current) li.setAttribute("aria-selected", "true");
+      li.addEventListener("click", function () { selectStation(s); });
+      stList.appendChild(li);
+    });
+    stList.hidden = false;
+    stInput.setAttribute("aria-expanded", "true");
+    activeIdx = -1;
+  }
+
+  stInput.addEventListener("focus", function () { stInput.select(); openList(""); });
+  stInput.addEventListener("input", function () { openList(stInput.value); });
+  stInput.addEventListener("keydown", function (e) {
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      if (stList.hidden) openList(stInput.value);
+      if (!shown.length) return;
+      var down = e.key === "ArrowDown";
+      activeIdx = activeIdx < 0 ? (down ? 0 : shown.length - 1) : (activeIdx + (down ? 1 : -1) + shown.length) % shown.length;
+      Array.prototype.forEach.call(stList.children, function (li, i) { li.classList.toggle("active", i === activeIdx); });
+      var a = stList.children[activeIdx];
+      stInput.setAttribute("aria-activedescendant", a.id);
+      a.scrollIntoView({ block: "nearest" });
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      var t = shown[activeIdx >= 0 ? activeIdx : 0];
+      if (t) selectStation(t);
+    } else if (e.key === "Escape") {
+      closeList();
+      stInput.value = current.name;
+    }
+  });
+  $("stToggle").addEventListener("click", function () {
+    if (stList.hidden) { stInput.focus(); openList(""); }
+    else { closeList(); stInput.value = current.name; }
+  });
+  document.addEventListener("pointerdown", function (e) {
+    if (!$("picker").contains(e.target) && !stList.hidden) { closeList(); stInput.value = current.name; }
+  });
+  selectStation(STATIONS[0]);
+
+  // Controles
+  var toastTimer = null;
+  function toast(msg) {
+    $("toast").textContent = msg;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { $("toast").textContent = ""; }, 4000);
+  }
+  $("freightBtn").addEventListener("click", function () {
+    state.freight.push(Date.now());
+    save();
+    render(true);
+    toast("Registrado a las " + pad(new Date().getHours()) + ":" + pad(new Date().getMinutes()) + ".");
+  });
+
+  var ttSel = dayType(new Date());
+  $("ttDay").value = ttSel;
+  $("tt").value = state.tts[ttSel];
+  $("ttDay").addEventListener("change", function () {
+    $("tt").value = state.tts[$("ttDay").value];
+    $("ttMsg").textContent = "";
+  });
+  $("dayPrev").addEventListener("click", function () { viewOffset = Math.max(-365, viewOffset - 1); render(true); });
+  $("dayNext").addEventListener("click", function () { viewOffset = Math.min(365, viewOffset + 1); render(true); });
+  $("dayLabel").addEventListener("click", function () { viewOffset = 0; render(true); });
+  $("before").value = state.before;
+  $("after").value = state.after;
+  $("before").addEventListener("change", function () {
+    state.before = clampInt($("before").value, 0, 30, 4);
+    $("before").value = state.before;
+    save(); render(true);
+  });
+  $("after").addEventListener("change", function () {
+    state.after = clampInt($("after").value, 0, 30, 4);
+    $("after").value = state.after;
+    save(); render(true);
+  });
+  $("apiUrl").value = state.api || "";
+  $("apiUrl").addEventListener("change", function () {
+    state.api = $("apiUrl").value.trim();
+    save();
+    live.on = false; live.trains = []; namesLoaded = false;
+    render(true);
+    refreshLive().then(function () { render(true); });
+  });
+  $("saveTT").addEventListener("click", function () {
+    var parsed = parseTT($("tt").value);
+    if (!parsed.length && $("tt").value.trim() !== "") {
+      $("ttMsg").textContent = "No he reconocido ningún tren. Cada línea debe empezar por la hora, como 10:27 Alvia 190.";
+      return;
+    }
+    state.tts[$("ttDay").value] = $("tt").value;
+    save();
+    $("ttMsg").textContent = "Horario guardado: " + parsed.length + " trenes.";
+    render(true);
+  });
+  $("resetTT").addEventListener("click", function () {
+    var k = $("ttDay").value;
+    state.tts[k] = DEFAULTS[k];
+    $("tt").value = DEFAULTS[k];
+    state.delays = {};
+    save();
+    $("ttMsg").textContent = DEFAULTS[k] ? "Horario de Adif restaurado." : "Horario vaciado: aún no hay horario de Adif para este tipo de día.";
+    render(true);
+  });
+  var clearTimer = null, armed = false;
+  $("clearFreight").addEventListener("click", function () {
+    var b = $("clearFreight");
+    if (!armed) {
+      armed = true;
+      b.textContent = "Pulsa otra vez para borrar todo";
+      clearTimeout(clearTimer);
+      clearTimer = setTimeout(function () { armed = false; b.textContent = "Borrar registros de mercancías"; }, 4000);
+      return;
+    }
+    armed = false;
+    clearTimeout(clearTimer);
+    state.freight = [];
+    save();
+    b.textContent = "Borrar registros de mercancías";
+    render(true);
+  });
+
+  render(true);
+  function liveTick() { refreshLive().then(function () { render(false); }); }
+  refreshLive().then(function () { render(true); });
+  setInterval(function () { render(false); }, 20000);
+  setInterval(liveTick, 30000);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) { render(true); refreshLive().then(function () { render(true); }); } });
+})();
+</script>
+</body>
+</html>
